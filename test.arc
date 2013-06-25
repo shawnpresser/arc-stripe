@@ -53,7 +53,7 @@ jQuery(function($) {
 
 "))
 
-(mac aform2 ((f (o id "")) . body)
+(mac aform2 (id f . body)
   (w/uniq ga
     `(tag (form id ,id method 'post action fnurl*)
        (fnid-field (fnid (fn (,ga)
@@ -79,30 +79,28 @@ jQuery(function($) {
 (defop test req
   (npage "Test"
     (trtd
-      (aform2 ((fn (req)
+      (aform2 'payment-form
+              (fn (req)
                  (pr req)
                  (br 2)
                  (write 
                    (stripe-charge stripesec*
                                   1000
                                   (arg req "stripeToken")
-                                  "test charge."))
-                 ) 'payment-form)
-        (tag (span class "payment-errors") (pr "errors go here"))
-        (tag (div class "form-row")
-          (tag label
-            (tag span (pr "Card Number"))
-            (gentag input type "text" size 20 data-stripe 'number)))
-        (tag (div class "form-row")
-          (tag label
-            (tag span (pr "CVC"))
-            (gentag input type "text" size 4 data-stripe 'cvc)))
-        (tag (div class "form-row")
-          (tag label
-            (tag span (pr "Expiration (MM/YYYY)"))
-            (gentag input type "text" size 2 data-stripe 'exp-month))
-          (tag span (pr " / "))
-          (gentag input type "text" size 4 data-stripe 'exp-year))
+                                  "test charge.")))
+        (zerotable
+          (tr (spanrow 2 (center (spanclass "payment-errors" (pr "errors go here")))))
+          (tr
+            (tdr (tag span (pr "Card Number")))
+            (td  (gentag input type "text" size 20 data-stripe 'number)))
+          (tr
+            (tdr (tag span (pr "Security Code")))
+            (td  (gentag input type "text" size 4 data-stripe 'cvc)))
+          (tr
+            (tdr (tag span (pr "Expiration (MM/YYYY)")))
+            (td  (gentag input type "text" size 2 data-stripe 'exp-month)
+              (tag span (pr " / "))
+              (gentag input type "text" size 4 data-stripe 'exp-year))))
         (but "Submit Payment")))))
 
 (def tsv ((o port 8080))
