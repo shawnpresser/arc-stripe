@@ -53,40 +53,9 @@ jQuery(function($) {
 
 "))
 
-(= stripeform* "
-<!--<form action=\"\" method=\"POST\" id=\"payment-form\">-->
-  <span class=\"payment-errors\">foo</span>
-
-  <div class=\"form-row\">
-    <label>
-      <span>Card Number</span>
-      <input type=\"text\" size=\"20\" data-stripe=\"number\"/>
-    </label>
-  </div>
-
-  <div class=\"form-row\">
-    <label>
-      <span>CVC</span>
-      <input type=\"text\" size=\"4\" data-stripe=\"cvc\"/>
-    </label>
-  </div>
-
-  <div class=\"form-row\">
-    <label>
-      <span>Expiration (MM/YYYY)</span>
-      <input type=\"text\" size=\"2\" data-stripe=\"exp-month\"/>
-    </label>
-    <span> / </span>
-    <input type=\"text\" size=\"4\" data-stripe=\"exp-year\"/>
-  </div>
-
-  <button type=\"submit\">Submit Payment</button>
-<!--</form>-->
-")
-
-(mac aform2 ((f (o id "") (o action fnurl*)) . body)
+(mac aform2 ((f (o id "")) . body)
   (w/uniq ga
-    `(tag (form id ,id method 'post action ,action)
+    `(tag (form id ,id method 'post action fnurl*)
        (fnid-field (fnid (fn (,ga)
                            (prn)
                            (,f ,ga))))
@@ -118,11 +87,23 @@ jQuery(function($) {
                                   1000
                                   (arg req "stripeToken")
                                   "test charge."))
-                 ) "payment-form")
-        (pr stripeform*))
-      
-      )
-    ))
+                 ) 'payment-form)
+        (tag (span class "payment-errors") (pr "errors go here"))
+        (tag (div class "form-row")
+          (tag label
+            (tag span (pr "Card Number"))
+            (gentag input type "text" size 20 data-stripe 'number)))
+        (tag (div class "form-row")
+          (tag label
+            (tag span (pr "CVC"))
+            (gentag input type "text" size 4 data-stripe 'cvc)))
+        (tag (div class "form-row")
+          (tag label
+            (tag span (pr "Expiration (MM/YYYY)"))
+            (gentag input type "text" size 2 data-stripe 'exp-month))
+          (tag span (pr " / "))
+          (gentag input type "text" size 4 data-stripe 'exp-year))
+        (but "Submit Payment")))))
 
 (def tsv ((o port 8080))
   (asv port))
