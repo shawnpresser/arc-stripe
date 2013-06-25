@@ -34,11 +34,16 @@
                                    (coerce (rev strs) 'string))))
       stout)))
 
-(def stripe-new-charge (u amt tok desc (o capture t))
+;
+; Charges
+;
+
+(def stripe-new-charge (u amt tok desc (o currency "usd")
+                          (o capture t))
   (stripe-call "https://api.stripe.com/v1/charges"
                u 
                `((amount         ,amt)
-                 (currency        usd)
+                 (currency       ,currency)
                  (card           ,tok)
                  (description    ,desc)
                  (capture        ,(if capture "true")))
@@ -76,6 +81,10 @@
                  (application_fee        ,appfee))
                'post))
 
+;
+; Customers
+;
+
 (def stripe-new-customer (u (o card) (o coupon) (o email) (o desc)
                             (o balance) (o plan) (o trial_end)
                             (o quantity))
@@ -90,7 +99,6 @@
                  (trial_end       ,trial_end)
                  (quantity        ,quantity))
                'post))
-
 
 (def stripe-get-customer (u id)
   (stripe-call (+ "https://api.stripe.com/v1/customers/"
@@ -122,6 +130,51 @@
                u 
                `((count          ,num)
                  (created        ,created)
+                 (offset         ,off))
+               'get))
+
+;
+; Plans
+;
+
+(def stripe-new-plan (u id name amt interval interval_count
+                        (o currency "usd") (o trial_period_days))
+  (stripe-call "https://api.stripe.com/v1/plans"
+               u 
+               `((id                ,id)
+                 (name              ,name)
+                 (amount            ,amt)
+                 (currency          ,currency)
+                 (interval          ,interval)
+                 (interval_count    ,interval_count)
+                 (trial_period_days ,trial_period_days))
+               'post))
+
+(def stripe-get-plan (u id)
+  (stripe-call (+ "https://api.stripe.com/v1/plans/"
+                  (escparm id))
+               u 
+               nil
+               'get))
+
+(def stripe-update-plan (u id name)
+  (stripe-call (+ "https://api.stripe.com/v1/plans/"
+                  (escparm id))
+               u 
+               `((name              ,name))
+               'post))
+
+(def stripe-delete-plan (u id)
+  (stripe-call (+ "https://api.stripe.com/v1/plans/"
+                  (escparm id))
+               u 
+               nil
+               'delete))
+
+(def stripe-get-plans (u (o num 10) (o off 0) (o created))
+  (stripe-call "https://api.stripe.com/v1/plans"
+               u 
+               `((count          ,num)
                  (offset         ,off))
                'get))
 
