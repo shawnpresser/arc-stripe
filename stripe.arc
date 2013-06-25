@@ -458,3 +458,14 @@
                  (date           ,date)
                  (status         ,status))
                'get))
+
+;
+; Account
+;
+
+(def stripe-account (u)
+  (stripe-call "https://api.stripe.com/v1/account"
+               u 
+               nil
+               'get))
+
