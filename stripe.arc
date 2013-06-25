@@ -3,26 +3,27 @@
                  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                  "1234567890_-.@ "))
 
-(def escparm (x)
+(def escparm (x (o morechars))
   (with (cmd (coerce x 'string)
          s   nil)
     (each c cmd
-      (let p (positions c safechars*)
+      (let p (positions c (string safechars* morechars))
         (when p (push c s))))
     (coerce (rev s) 'string)))
-
 
 (def stripe-call (api u parms (o flag))
   (let strs nil
     (each (k v) parms
-      (when v
-        (let s (escparm (coerce v 'string))
-          (when (positions #\space s)
-            (= s (+ "\"" s "\"")))
-          (push (+ " -d "
-                   (coerce k 'string)
-                   "="
-                   s) strs))))
+      ((afn (k v)
+         (when v
+           (if (alist v)
+               (each (vk vv) v
+                 (self (string k "[" vk "]") vv))
+               (do
+                 (push (string " -d "
+                               #\" (escparm k "[]") "=" (escparm v) #\")
+                       strs)))))
+       k v))
     (let (stout sterr) (tostrings
                          (system (+
                                    "curl -k "
@@ -358,7 +359,7 @@
                nil
                'delete))
 
-(def stripe-get-invoiceitems (u (o cust) (o num 10) (o off 0)
+(def stripe-get-invoiceitems (u (o num 10) (o off 0) (o cust) 
                                 (o created))
   (stripe-call "https://api.stripe.com/v1/invoiceitems"
                u 
@@ -366,5 +367,56 @@
                  (offset         ,off)
                  (customer       ,cust)
                  (created        ,created))
+               'get))
+
+;
+; Recipients
+;
+
+(def stripe-new-recipient (u name type (o tax-id) (o bank) (o email)
+                             (o desc))
+  (stripe-call "https://api.stripe.com/v1/recipients"
+               u 
+               `((name              ,name)
+                 (type              ,type)
+                 (tax_id            ,tax-id)
+                 (bank_account      ,bank)
+                 (email             ,email)
+                 (description       ,desc))
+               'post))
+
+(def stripe-get-recipient (u id)
+  (stripe-call (+ "https://api.stripe.com/v1/recipients/"
+                  (escparm id))
+               u 
+               nil
+               'get))
+
+(def stripe-update-recipient (u id name type (o tax-id) (o bank)
+                                (o email) (o desc))
+  (stripe-call (+ "https://api.stripe.com/v1/recipients/"
+                  (escparm id))
+               u 
+               `((name              ,name)
+                 (type              ,type)
+                 (tax_id            ,tax-id)
+                 (bank_account      ,bank)
+                 (email             ,email)
+                 (description       ,desc))
+               'post))
+
+(def stripe-delete-recipient (u id)
+  (stripe-call (+ "https://api.stripe.com/v1/recipients/"
+                  (escparm id))
+               u 
+               nil
+               'delete))
+
+(def stripe-get-recipients (u (o num 10) (o off 0) (o verified))
+  (stripe-call "https://api.stripe.com/v1/recipients"
+               u 
+               `((count          ,num)
+                 (offset         ,off)
+                 (verified       ,verified))
                'get))
 
