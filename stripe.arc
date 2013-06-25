@@ -11,8 +11,10 @@
         (when p (push c s))))
     (coerce (rev s) 'string)))
 
+(= noisy-stripe* nil)
+
 (def stripe-call (api u parms (o flag))
-  (let strs nil
+  (let params nil
     (each (k v) parms
       ((afn (k v)
          (when v
@@ -22,18 +24,19 @@
                (do
                  (push (string " -d "
                                #\" (escparm k "[]") "=" (escparm v) #\")
-                       strs)))))
+                       params)))))
        k v))
-    (let (stout sterr) (tostrings
-                         (system (+
-                                   "curl -k "
-                                   (if (is flag 'get)    "-G "
-                                       (is flag 'post)   "-X POST "
-                                       (is flag 'delete) "-X DELETE ")
-                                   api
-                                   " -u "(escparm u)":"
-                                   (coerce (rev strs) 'string))))
-      stout)))
+    (let cmd (+ "curl -k "
+                (if (is flag 'get)    "-G "
+                    (is flag 'post)   "-X POST "
+                    (is flag 'delete) "-X DELETE ")
+                api
+                " -u "(escparm u)":"
+                (string (rev params)))
+      (when noisy-stripe*
+        (prn cmd))
+      (let (stout sterr) (tostrings (system cmd))
+        stout))))
 
 ;
 ; Charges
@@ -477,5 +480,17 @@
   (stripe-call "https://api.stripe.com/v1/balance"
                u 
                nil
+               'get))
+
+(def stripe-get-balances (u (o num 10) (o off 0) (o type) (o transfer)
+                            (o avail-on) (o created))
+  (stripe-call "https://api.stripe.com/v1/balance/history"
+               u 
+               `((count          ,num)
+                 (offset         ,off)
+                 (type           ,type)
+                 (transfer       ,transfer)
+                 (available_on   ,avail-on)
+                 (created        ,created))
                'get))
 
