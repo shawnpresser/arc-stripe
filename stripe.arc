@@ -476,7 +476,7 @@
 ; Account
 ;
 
-(def stripe-account (u)
+(def stripe-get-account (u)
   (stripe-call "https://api.stripe.com/v1/account"
                u 
                nil
@@ -486,7 +486,7 @@
 ; Balance
 ;
 
-(def stripe-balance (u)
+(def stripe-get-balance (u)
   (stripe-call "https://api.stripe.com/v1/balance"
                u 
                nil
@@ -508,7 +508,7 @@
 ; Events
 ;
 
-(def stripe-event (u)
+(def stripe-get-event (u id)
   (stripe-call (+ "https://api.stripe.com/v1/events/"
                   (escparm id))
                u 
@@ -522,5 +522,49 @@
                  (offset         ,off)
                  (type           ,type)
                  (created        ,created))
+               'get))
+
+;
+; Tokens
+;
+
+(def stripe-new-cc-token (u number exp-month exp-year (o cvc) (o name)
+                            (o addr-line1) (o addr-line2) (o addr-city)
+                            (o addr-zip) (o addr-state)
+                            (o addr-country))
+  (stripe-call "https://api.stripe.com/v1/tokens"
+               u 
+               `((card           ((number          ,number)
+                                  (exp_month       ,exp-month)
+                                  (exp_year        ,exp-year)
+                                  (cvc             ,cvc)
+                                  (name            ,name)
+                                  (address_line1   ,addr-line1)
+                                  (address_line2   ,addr-line2)
+                                  (address_city    ,addr-city)
+                                  (address_zip     ,addr-zip)
+                                  (address_state   ,addr-state)
+                                  (address_country ,addr-country))))
+               'post))
+
+(def stripe-new-cust-token (u oauth)
+  (stripe-call "https://api.stripe.com/v1/tokens"
+               u 
+               `((customer       ,oauth))
+               'post))
+
+(def stripe-new-bank-token (u routing account (o country "US"))
+  (stripe-call "https://api.stripe.com/v1/tokens"
+               u 
+               `((bank_account   ((country        ,country)
+                                  (routing_number ,routing)
+                                  (account_number ,account))))
+               'post))
+
+(def stripe-get-token (u id)
+  (stripe-call (+ "https://api.stripe.com/v1/tokens/"
+                  (escparm id))
+               u 
+               nil
                'get))
 
