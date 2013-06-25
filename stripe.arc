@@ -175,7 +175,7 @@
                nil
                'delete))
 
-(def stripe-get-plans (u (o num 10) (o off 0) (o created))
+(def stripe-get-plans (u (o num 10) (o off 0))
   (stripe-call "https://api.stripe.com/v1/plans"
                u 
                `((count          ,num)
@@ -240,7 +240,7 @@
                nil
                'delete))
 
-(def stripe-get-coupons (u (o num 10) (o off 0) (o created))
+(def stripe-get-coupons (u (o num 10) (o off 0))
   (stripe-call "https://api.stripe.com/v1/coupons"
                u 
                `((count          ,num)
@@ -257,4 +257,114 @@
                u 
                nil
                'delete))
+
+;
+; Invoices
+;
+
+(def stripe-get-invoice (u id)
+  (stripe-call (+ "https://api.stripe.com/v1/invoices/"
+                  (escparm id))
+               u 
+               nil
+               'get))
+
+(def stripe-get-invoice-lines (u id (o cust) (o num 10) (o off 0))
+  (stripe-call (+ "https://api.stripe.com/v1/invoices/"
+                  (escparm id) "/lines")
+               u 
+               `((id                 ,id)
+                 (customer           ,cust)
+                 (count              ,num)
+                 (offset             ,off))
+               'get))
+
+(def stripe-new-invoice (u cust)
+  (stripe-call "https://api.stripe.com/v1/invoices"
+               u 
+               `((cust               ,cust))
+               'post))
+
+(def stripe-pay-invoice (u id)
+  (stripe-call (+ "https://api.stripe.com/v1/invoices/"
+                  (escparm id) "/pay")
+               u 
+               nil
+               'post))
+
+(def stripe-update-invoice (u id closed)
+  (stripe-call (+ "https://api.stripe.com/v1/invoices/"
+                  (escparm id))
+               u 
+               `((closed             ,(if closed "true" "false")))
+               'post))
+
+(def stripe-delete-invoice (u id)
+  (stripe-call (+ "https://api.stripe.com/v1/invoices/"
+                  (escparm id))
+               u 
+               nil
+               'delete))
+
+(def stripe-get-invoices (u (o cust) (o num 10) (o off 0) (o date))
+  (stripe-call "https://api.stripe.com/v1/invoices"
+               u 
+               `((count          ,num)
+                 (offset         ,off)
+                 (customer       ,cust)
+                 (date           ,date))
+               'get))
+
+(def stripe-get-upcoming-invoices (u (o cust))
+  (stripe-call "https://api.stripe.com/v1/invoices/upcoming"
+               u 
+               `((customer       ,cust))
+               'get))
+
+
+;
+; Invoice Items
+;
+
+(def stripe-new-invoiceitem (u cust amt currency (o inv) (o desc))
+  (stripe-call "https://api.stripe.com/v1/invoiceitems"
+               u 
+               `((customer          ,cust)
+                 (amount            ,amt)
+                 (currency          ,currency)
+                 (invoice           ,inv)
+                 (description       ,desc))
+               'post))
+
+(def stripe-get-invoiceitem (u id)
+  (stripe-call (+ "https://api.stripe.com/v1/invoiceitems/"
+                  (escparm id))
+               u 
+               nil
+               'get))
+
+(def stripe-update-invoiceitem (u amt desc)
+  (stripe-call (+ "https://api.stripe.com/v1/invoiceitems/"
+                  (escparm id))
+               u 
+               `((amount            ,amt)
+                 (description       ,desc))
+               'post))
+
+(def stripe-delete-invoiceitem (u id)
+  (stripe-call (+ "https://api.stripe.com/v1/invoiceitems/"
+                  (escparm id))
+               u 
+               nil
+               'delete))
+
+(def stripe-get-invoiceitems (u (o cust) (o num 10) (o off 0)
+                                (o created))
+  (stripe-call "https://api.stripe.com/v1/invoiceitems"
+               u 
+               `((count          ,num)
+                 (offset         ,off)
+                 (customer       ,cust)
+                 (created        ,created))
+               'get))
 
