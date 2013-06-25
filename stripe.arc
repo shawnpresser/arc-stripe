@@ -32,8 +32,8 @@
                     (is flag 'delete) "-X DELETE ")
                 api
                 " -u "(escparm u)":"
-                (string (rev params)
-                " -H Stripe-Version: 2013-02-13 "))
+                ;" -H Stripe-Version: 2013-02-13 "
+                (string (rev params)))
       (when noisy-stripe*
         (prn cmd))
       (let (stout sterr) (tostrings (system cmd))
