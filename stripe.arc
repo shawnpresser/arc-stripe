@@ -419,3 +419,42 @@
                  (verified       ,verified))
                'get))
 
+;
+; Transfers
+;
+
+(def stripe-new-transfer (u amt currency recipient (o desc)
+                            (o stmt-desc))
+  (stripe-call "https://api.stripe.com/v1/transfers"
+               u 
+               `((amount               ,amt)
+                 (currency             ,currency)
+                 (recipient            ,recipient)
+                 (description          ,desc)
+                 (statement_descriptor ,stmt-desc))
+               'post))
+
+(def stripe-get-transfer (u id)
+  (stripe-call (+ "https://api.stripe.com/v1/transfers/"
+                  (escparm id))
+               u 
+               nil
+               'get))
+
+(def stripe-cancel-transfer (u id)
+  (stripe-call (+ "https://api.stripe.com/v1/transfers/"
+                  (escparm id) "/cancel")
+               u 
+               nil
+               'post))
+
+(def stripe-get-transfers (u (o num 10) (o off 0) (o recipient)
+                             (o date) (o status))
+  (stripe-call "https://api.stripe.com/v1/transfers"
+               u 
+               `((count          ,num)
+                 (offset         ,off)
+                 (recipient      ,recipient)
+                 (date           ,date)
+                 (status         ,status))
+               'get))
