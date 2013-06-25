@@ -469,3 +469,13 @@
                nil
                'get))
 
+;
+; Balance
+;
+
+(def stripe-balance (u)
+  (stripe-call "https://api.stripe.com/v1/balance"
+               u 
+               nil
+               'get))
+
