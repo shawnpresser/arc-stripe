@@ -6,6 +6,8 @@
 
 (deftem pay
   id          nil
+  by          nil
+  ip          nil
   time        (msec)
   action      nil  ; charge, refund, ...
   processor   nil  ; stripe, wepay, amazon, ...
@@ -15,7 +17,7 @@
 
 (def tsv ((o port 8080))
   (push paydir* srvdirs*)
-  (unless pays* (load-pays))
+  (unless (> (len pays*) 0) (load-pays))
   (asv port))
 
 (= pays* (table) maxpayid* 0)
@@ -43,13 +45,43 @@
 
 (def paylog args (apply srvlog 'pay args))
 
-(def create-charge (ip amt tok desc)
-  (paylog ip 'stripe 'charge amt)
-  (let p (inst 'pay 'id (new-pay-id) 'action 'charge 'processor 'stripe
+(def create-charge (ip u amt tok desc)
+  (paylog ip u 'stripe 'charge amt)
+  (let p (inst 'pay 'id (new-pay-id) 'by u 'ip ip 'action 'charge
+               'processor 'stripe
                'result (stripe-charge stripesec* amt tok desc))
     (save-pay p)
     (= (pays* p!id) p)
     p))
+
+(def display-pay-number (n)
+  (when n (tag (td align 'right valign 'top class 'title)
+            (pr n "."))))
+
+(mac tdrt body `(tag (td align 'right valign 'top) ,@body))
+
+(def display-pay (n p)
+  (tr (display-pay-number n)
+      (tdrt (pr p!time))
+      (tdrt (pr p!ip))
+      (tdrt (pr p!by))
+      (tdrt (pr p!processor))
+      (tdrt (pr p!action))
+      (td (tag pre (pr (multisubst `(("\n" "<br>") (" " "&nbsp;")) p!result))))))
+
+(def display-pays (pays (o start 0) (o end))
+  (tab
+    (let n start
+      (each p (cut (rev pays) start end)
+        (display-pay (++ n) p)
+        (spacerow 5)))))
+
+(def pays ((o keepfn [do t]))
+  (let xs nil
+    (each (id p) pays*
+      (when (keepfn p)
+        (push p xs)))
+    (rev xs)))
 
 ; Page top
 
@@ -101,6 +133,27 @@ jQuery(function($) {
 
 "))
 
+; Site-Specific Defop Variants
+
+(def ensure-user (u))
+
+(mac defopt (name parm test msg . body)
+  `(defop ,name ,parm
+     (if (,test (get-user ,parm))
+         (do ,@body)
+         (login-page 'both (+ "Please log in" ,msg ".")
+                     (list (fn (u ip) (ensure-user u))
+                           (string ',name (reassemble-args ,parm)))))))
+
+(mac defopg (name parm . body)
+  `(defopt ,name ,parm idfn "" ,@body))
+
+(mac defope (name parm . body)
+  `(defopt ,name ,parm editor " as an editor" ,@body))
+
+(mac defopa (name parm . body)
+  `(defopt ,name ,parm admin " as an administrator" ,@body))
+
 (mac aform2 (id f . body)
   (w/uniq ga
     `(tag (form id ,id method 'post action fnurl*)
@@ -123,8 +176,7 @@ jQuery(function($) {
                      bgcolor sand)
            ,@body)))))
 
-
-(defop test req
+(defopg test req
   (npage "Test"
     (trtd
       (aform2 'payment-form
@@ -132,7 +184,8 @@ jQuery(function($) {
                  (pr req)
                  (br 2)
                  (write 
-                   (create-charge (arg req "ip")
+                   (create-charge req!ip
+                                  (get-user req)
                                   1000
                                   (arg req "stripeToken")
                                   "test charge.")))
@@ -150,4 +203,9 @@ jQuery(function($) {
               (tag span (pr " / "))
               (gentag input type "text" size 4 data-stripe 'exp-year))))
         (but "Submit Payment")))))
+
+(defopa pays req
+  (npage "Payments"
+    (trtd
+      (display-pays (pays)))))
 
