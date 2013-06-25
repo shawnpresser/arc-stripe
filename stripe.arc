@@ -38,15 +38,19 @@
 ; Charges
 ;
 
-(def stripe-new-charge (u amt tok desc (o currency "usd")
-                          (o capture t))
+(def stripe-new-charge (u amt (o cust) (o card) (o desc)
+                          (o currency "usd")
+                          (o capture t)
+                          (o appfee))
   (stripe-call "https://api.stripe.com/v1/charges"
                u 
-               `((amount         ,amt)
-                 (currency       ,currency)
-                 (card           ,tok)
-                 (description    ,desc)
-                 (capture        ,(if capture "true")))
+               `((amount          ,amt)
+                 (currency        ,currency)
+                 (customer        ,cust)
+                 (card            ,card)
+                 (description     ,desc)
+                 (application_fee ,appfee)
+                 (capture         ,(if capture "true")))
                'post))
 
 (def stripe-get-charge (u id)
@@ -85,8 +89,8 @@
 ; Customers
 ;
 
-(def stripe-new-customer (u (o card) (o coupon) (o email) (o desc)
-                            (o balance) (o plan) (o trial_end)
+(def stripe-new-customer (u (o card) (o email) (o desc) (o balance)
+                            (o coupon) (o plan) (o trial_end)
                             (o quantity))
   (stripe-call "https://api.stripe.com/v1/customers"
                u 
@@ -178,4 +182,28 @@
                  (offset         ,off))
                'get))
 
+
+;
+; Subscriptions
+;
+
+(def stripe-update-sub (u cust plan (o coupon) (o prorate t)
+                          (o trial_end) (o quantity) (o card))
+  (stripe-call (+ "https://api.stripe.com/v1/customers/"
+                  (escparm cust) "/subscription")
+               u
+               `((plan              ,plan)
+                 (coupon            ,coupon)
+                 (prorate           ,(if prorate "true"))
+                 (trial_end         ,trial_end)
+                 (quantity          ,quantity)
+                 (card              ,card))
+               'post))
+
+(def stripe-cancel-sub (u cust (o at_period_end))
+  (stripe-call (+ "https://api.stripe.com/v1/customers/"
+                  (escparm cust) "/subscription")
+               u
+               `((at_period_end     ,at_period_end))
+               'delete))
 

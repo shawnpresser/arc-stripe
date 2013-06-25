@@ -45,14 +45,25 @@
 
 (def paylog args (apply srvlog 'pay args))
 
-(def create-charge (ip u amt tok desc)
+(mac pay-stripe (ip u call . params)
+  (w/uniq gp
+    `(let ,gp (inst 'pay 'id (new-pay-id) 'by ,u 'ip ,ip 'action ',call
+                    'processor 'stripe 'result (,call stripesec* ,@params))
+       (save-pay ,gp)
+       (= (,gp 'ret) (jsondec (,gp 'result)))
+       (= (pays* (,gp 'id)) ,gp)
+       ,gp)))
+
+(def create-customer (ip u card)
+  (paylog ip u 'stripe 'newcust)
+  (pay-stripe ip u stripe-new-customer card))
+
+(def create-charge (ip u amt card)
   (paylog ip u 'stripe 'charge amt)
-  (let p (inst 'pay 'id (new-pay-id) 'by u 'ip ip 'action 'charge
-               'processor 'stripe
-               'result (stripe-charge stripesec* amt tok desc))
-    (save-pay p)
-    (= (pays* p!id) p)
-    p))
+  (withs (c  (create-customer ip u card)
+          id (c!ret "id"))
+    (unless id (err "Charge failed"))
+    (pay-stripe ip u stripe-new-charge amt id)))
 
 (def display-pay-number (n)
   (when n (tag (td align 'right valign 'top class 'title)
@@ -60,8 +71,8 @@
 
 (mac tdrt body `(tag (td align 'right valign 'top) ,@body))
 
-(def display-pay (n p)
-  (tr (display-pay-number n)
+(def display-pay (p)
+  (tr (display-pay-number p!id)
       (tdrt (pr p!time))
       (tdrt (pr p!ip))
       (tdrt (pr p!by))
@@ -71,17 +82,16 @@
 
 (def display-pays (pays (o start 0) (o end))
   (tab
-    (let n start
-      (each p (cut (rev pays) start end)
-        (display-pay (++ n) p)
-        (spacerow 5)))))
+    (each p (cut (rev pays) start end)
+      (display-pay p)
+      (spacerow 5))))
 
 (def pays ((o keepfn [do t]))
   (let xs nil
     (each (id p) pays*
       (when (keepfn p)
         (push p xs)))
-    (rev xs)))
+    (sort (compare < [do _!id]) xs)))
 
 ; Page top
 
@@ -187,8 +197,7 @@ jQuery(function($) {
                    (create-charge req!ip
                                   (get-user req)
                                   1000
-                                  (arg req "stripeToken")
-                                  "test charge.")))
+                                  (arg req "stripeToken"))))
         (zerotable
           (tr (spanrow 2 (center (spanclass "payment-errors" (pr "errors go here")))))
           (tr
