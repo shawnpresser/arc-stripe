@@ -26,21 +26,23 @@
     (let (stout sterr) (tostrings
                          (system (+
                                    "curl -k "
-                                   (if (is flag 'get) "-G ")
-                                   (if (is flag 'post) "-X POST ")
+                                   (if (is flag 'get)    "-G "
+                                       (is flag 'post)   "-X POST "
+                                       (is flag 'delete) "-X DELETE ")
                                    api
                                    " -u "(escparm u)":"
                                    (coerce (rev strs) 'string))))
       stout)))
 
-(def stripe-charge (u amt tok desc (o capture t))
+(def stripe-new-charge (u amt tok desc (o capture t))
   (stripe-call "https://api.stripe.com/v1/charges"
                u 
-               `((amount      ,amt)
-                 (currency     usd)
-                 (card        ,tok)
-                 (description ,desc)
-                 (capture     ,(if capture "true")))))
+               `((amount         ,amt)
+                 (currency        usd)
+                 (card           ,tok)
+                 (description    ,desc)
+                 (capture        ,(if capture "true")))
+               'post))
 
 (def stripe-get-charge (u id)
   (stripe-call (+ "https://api.stripe.com/v1/charges/"
@@ -74,6 +76,53 @@
                  (application_fee        ,appfee))
                'post))
 
+(def stripe-new-customer (u (o card) (o coupon) (o email) (o desc)
+                            (o balance) (o plan) (o trial_end)
+                            (o quantity))
+  (stripe-call "https://api.stripe.com/v1/customers"
+               u 
+               `((card            ,card)
+                 (coupon          ,coupon)
+                 (email           ,email)
+                 (description     ,desc)
+                 (account_balance ,balance)
+                 (plan            ,plan)
+                 (trial_end       ,trial_end)
+                 (quantity        ,quantity))
+               'post))
 
+
+(def stripe-get-customer (u id)
+  (stripe-call (+ "https://api.stripe.com/v1/customers/"
+                  (escparm id))
+               u 
+               nil
+               'get))
+
+(def stripe-update-customer (u id (o card) (o coupon) (o desc)
+                               (o balance) (o email))
+  (stripe-call (+ "https://api.stripe.com/v1/customers/"
+                  (escparm id))
+               u 
+               `((card            ,card)
+                 (coupon          ,coupon)
+                 (email           ,email)
+                 (description     ,desc)
+                 (account_balance ,balance))))
+
+(def stripe-delete-customer (u id)
+  (stripe-call (+ "https://api.stripe.com/v1/customers/"
+                  (escparm id))
+               u 
+               nil
+               'delete))
+
+(def stripe-get-customers (u (o num 10) (o off 0) (o created))
+  (stripe-call "https://api.stripe.com/v1/customers"
+               u 
+               `((count          ,num)
+                 (created        ,created)
+                 (offset         ,off))
+               'get))
 
 
