@@ -39,8 +39,7 @@
 ; Charges
 ;
 
-(def stripe-new-charge (u amt (o cust) (o card) (o desc)
-                          (o currency "usd")
+(def stripe-new-charge (u amt currency (o cust) (o card) (o desc)
                           (o capture t)
                           (o appfee))
   (stripe-call "https://api.stripe.com/v1/charges"
@@ -142,8 +141,8 @@
 ; Plans
 ;
 
-(def stripe-new-plan (u id name amt interval interval_count
-                        (o currency "usd") (o trial_period_days))
+(def stripe-new-plan (u id name amt currency interval interval_count
+                        (o trial_period_days))
   (stripe-call "https://api.stripe.com/v1/plans"
                u 
                `((id                ,id)

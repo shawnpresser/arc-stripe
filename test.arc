@@ -63,7 +63,7 @@
   (withs (c  (create-customer ip u card)
           id (c!ret "id"))
     (unless id (err "Charge failed"))
-    (pay-stripe ip u stripe-new-charge amt id)))
+    (pay-stripe ip u stripe-new-charge amt "usd" id)))
 
 (def display-pay-number (n)
   (when n (tag (td align 'right valign 'top class 'title)
