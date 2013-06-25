@@ -372,6 +372,16 @@
                'get))
 
 ;
+; Disputes
+;
+(def stripe-update-dispute (u charge (o evidence))
+  (stripe-call (+ "https://api.stripe.com/v1/charges/"
+                  (escparm dispute) "/dispute")
+               u 
+               `((evidence       ,evidence))
+               'post))
+
+;
 ; Recipients
 ;
 
