@@ -247,3 +247,14 @@
                  (offset         ,off))
                'get))
 
+;
+; Discounts
+;
+
+(def stripe-delete-coupon (u cust)
+  (stripe-call (+ "https://api.stripe.com/v1/customers/"
+                  (escparm cust) "/discount")
+               u 
+               nil
+               'delete))
+
