@@ -90,7 +90,7 @@
 ;
 
 (def stripe-new-customer (u (o card) (o email) (o desc) (o balance)
-                            (o coupon) (o plan) (o trial_end)
+                            (o coupon) (o plan) (o trial-end)
                             (o quantity))
   (stripe-call "https://api.stripe.com/v1/customers"
                u 
@@ -100,7 +100,7 @@
                  (description     ,desc)
                  (account_balance ,balance)
                  (plan            ,plan)
-                 (trial_end       ,trial_end)
+                 (trial_end       ,trial-end)
                  (quantity        ,quantity))
                'post))
 
@@ -188,14 +188,14 @@
 ;
 
 (def stripe-update-sub (u cust plan (o coupon) (o prorate t)
-                          (o trial_end) (o quantity) (o card))
+                          (o trial-end) (o quantity) (o card))
   (stripe-call (+ "https://api.stripe.com/v1/customers/"
                   (escparm cust) "/subscription")
                u
                `((plan              ,plan)
                  (coupon            ,coupon)
                  (prorate           ,(if prorate "true"))
-                 (trial_end         ,trial_end)
+                 (trial_end         ,trial-end)
                  (quantity          ,quantity)
                  (card              ,card))
                'post))
@@ -206,4 +206,44 @@
                u
                `((at_period_end     ,at_period_end))
                'delete))
+
+;
+; Coupons
+;
+
+(def stripe-new-coupon (u dur (o id) (o amt-off) (o currency)
+                          (o perc-off) (o dur-months) (o max-redemps) 
+                          (o redeem-by))
+  (stripe-call "https://api.stripe.com/v1/coupons"
+               u 
+               `((id                 ,id)
+                 (duration           ,dur)
+                 (amount_off         ,amt-off)
+                 (currency           ,currency)
+                 (percent_off        ,perc-off)
+                 (duration_in_months ,dur-months)
+                 (max_redemptions    ,max-redemps)
+                 (redeem_by          ,redeem-by))
+               'post))
+
+(def stripe-get-coupon (u id)
+  (stripe-call (+ "https://api.stripe.com/v1/coupons/"
+                  (escparm id))
+               u 
+               nil
+               'get))
+
+(def stripe-delete-coupon (u id)
+  (stripe-call (+ "https://api.stripe.com/v1/coupons/"
+                  (escparm id))
+               u 
+               nil
+               'delete))
+
+(def stripe-get-coupons (u (o num 10) (o off 0) (o created))
+  (stripe-call "https://api.stripe.com/v1/coupons"
+               u 
+               `((count          ,num)
+                 (offset         ,off))
+               'get))
 
