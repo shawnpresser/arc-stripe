@@ -1,7 +1,55 @@
 (load "stripe.arc")
 
-(= stripekey* "pk_test_xaFf1GeaSmeg3wRg6YPNX9Dg")
-(= stripesec* "sk_test_YHFBf5rTlYikjw1GeDCbCLvt")
+(= user-uid*  1000
+   stripekey* "pk_test_xaFf1GeaSmeg3wRg6YPNX9Dg"
+   stripesec* "sk_test_YHFBf5rTlYikjw1GeDCbCLvt")
+
+(deftem pay
+  id          nil
+  time        (msec)
+  action      nil  ; charge, refund, ...
+  processor   nil  ; stripe, wepay, amazon, ...
+  result      nil) ; stripe JSON, ...
+
+(= paydir* "arc/pay/")
+
+(def tsv ((o port 8080))
+  (push paydir* srvdirs*)
+  (unless pays* (load-pays))
+  (asv port))
+
+(= pays* (table) maxpayid* 0)
+
+(def load-pays ()
+  (system (+ "rm " paydir* "*.tmp"))
+  (pr "load payments: ")
+  (with (pays nil
+         ids  (sort > (map int (dir paydir*))))
+    (if ids (= maxpayid* (car ids)))
+    (noisy-each 100 id ids
+      (let p (load-pay id)
+        (push p pays)))))
+
+(def load-pay (id)
+  (= (pays* id) (temload 'pay (+ paydir* id))))
+
+(def new-pay-id ()
+  (evtil (++ maxpayid*) [~file-exists (+ paydir* _)]))
+
+(def pay (id)
+  (or (pays* id) (errsafe:load-pay id)))
+
+(def save-pay (p) (save-table p (+ paydir* p!id)))
+
+(def paylog args (apply srvlog 'pay args))
+
+(def create-charge (ip amt tok desc)
+  (paylog ip 'stripe 'charge amt)
+  (let p (inst 'pay 'id (new-pay-id) 'action 'charge 'processor 'stripe
+               'result (stripe-charge stripesec* amt tok desc))
+    (save-pay p)
+    (= (pays* p!id) p)
+    p))
 
 ; Page top
 
@@ -84,7 +132,7 @@ jQuery(function($) {
                  (pr req)
                  (br 2)
                  (write 
-                   (stripe-charge stripesec*
+                   (create-charge (arg req "ip")
                                   1000
                                   (arg req "stripeToken")
                                   "test charge.")))
@@ -102,7 +150,4 @@ jQuery(function($) {
               (tag span (pr " / "))
               (gentag input type "text" size 4 data-stripe 'exp-year))))
         (but "Submit Payment")))))
-
-(def tsv ((o port 8080))
-  (asv port))
 
