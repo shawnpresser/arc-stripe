@@ -99,9 +99,14 @@
 
 (def gen-css-url ())
 
-(= jqueryjs* "
-<script type=\"text/javascript\" src=\"http://code.jquery.com/jquery-2.0.2.min.js\"></script>
-")
+(= jqueryjs* (+ "
+<link href=\"css/no-theme/jquery-ui-1.10.3.custom.css\" rel=\"stylesheet\">
+<script src=\"js/jquery-1.9.1.js\"></script>
+<script src=\"js/jquery-ui-1.10.3.custom.js\"></script>
+<script src=\"js/json2.js\"></script>
+<script src=\"js/underscore-min.js\"></script>
+<script src=\"js/backbone-min.js\"></script>
+" (filechars "static/humble-sliders.html")))
 
 (= stripejs* (+ "
 <script type=\"text/javascript\" src=\"https://js.stripe.com/v2/\"></script>
@@ -143,6 +148,39 @@ jQuery(function($) {
 
 "))
 
+(= slidersjs* "
+<script type='text/javascript'>
+$(function(){
+  window.dbgSliders = humbleSliders(
+    25, /* default price in dollars */
+    $('#sliders-holder'), /* container to append the sliders into */
+    {
+      \"order\": [{
+          \"class\": \"developers\",
+          \"name\": \"Developers\"
+      }, {
+          \"class\": \"charity\",
+          \"name\": \"Charity\"
+      }],
+      \"split\": {
+          \"default\": {
+              \"developers\": 0.80,
+              \"charity\": 0.20
+          },
+          \"developers\": {
+              \"developers\": 1.0,
+              \"charity\": 0.0
+          },
+          \"charity\": {
+              \"developers\": 0.0,
+              \"charity\": 1.0
+          }
+      }
+  });
+});
+</script>
+")
+
 ; Site-Specific Defop Variants
 
 (def ensure-user (u))
@@ -179,12 +217,17 @@ jQuery(function($) {
        ;(prn "<link rel=\"shortcut icon\" href=\"" favicon-url* "\">")
        (pr jqueryjs*)
        (pr stripejs*)
+       (pr slidersjs*)
        (tag title (pr ,title)))
      (tag body 
        (center
          (tag (table border 0 cellpadding 0 cellspacing 0 width "85%"
                      bgcolor sand)
            ,@body)))))
+
+(def usd->cents (s)
+  (when (match-pat-exact "\\$[0-9]+\\.[0-9][0-9]" s)
+    (coerce (multisubst '(("$" "") ("." "")) s) 'int)))
 
 (defopg test req
   (npage "Test"
@@ -193,13 +236,14 @@ jQuery(function($) {
               (fn (req)
                  (pr req)
                  (br 2)
-                 (write 
-                   (create-charge req!ip
-                                  (get-user req)
-                                  1000
-                                  (arg req "stripeToken"))))
+                 (iflet cents (errsafe:usd->cents (arg req "master-amount"))
+                   (write (create-charge req!ip
+                                         (get-user req)
+                                         cents
+                                         (arg req "stripeToken")))))
         (zerotable
           (tr (spanrow 2 (center (spanclass "payment-errors" (pr "errors go here")))))
+          (tr (spanrow 2 (tag (div id 'sliders-holder))))
           (tr
             (tdr (tag span (pr "Card Number")))
             (td  (gentag input type "text" size 20 data-stripe 'number)))
