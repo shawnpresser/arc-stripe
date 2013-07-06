@@ -100,13 +100,14 @@
 (def gen-css-url ())
 
 (= jqueryjs* (+ "
-<link href=\"css/no-theme/jquery-ui-1.10.3.custom.css\" rel=\"stylesheet\">
-<script src=\"js/jquery-1.9.1.js\"></script>
-<script src=\"js/jquery-ui-1.10.3.custom.js\"></script>
-<script src=\"js/json2.js\"></script>
-<script src=\"js/underscore-min.js\"></script>
-<script src=\"js/backbone-min.js\"></script>
-" (filechars "static/humble-sliders.html")))
+<link href=\"/css/no-theme/jquery-ui-1.10.3.custom.css\" rel=\"stylesheet\">
+<script src=\"/js/jquery-1.9.1.js\"></script>
+<script src=\"/js/jquery-ui-1.10.3.custom.js\"></script>
+<script src=\"/js/jquery.ui.touch-punch.min.js\"></script>
+<script src=\"/js/json2.js\"></script>
+<script src=\"/js/underscore-min.js\"></script>
+<script src=\"/js/backbone-min.js\"></script>
+" (filechars "static/humble-sliders/humble-sliders.html")))
 
 (= stripejs* (+ "
 <script type=\"text/javascript\" src=\"https://js.stripe.com/v2/\"></script>
@@ -152,17 +153,17 @@ jQuery(function($) {
 <script type='text/javascript'>
 $(function(){
   window.dbgSliders = humbleSliders(
-    25, /* default price in dollars */
+    2500, /* default price in pennies */
     $('#sliders-holder'), /* container to append the sliders into */
     {
-      \"order\": [{
+      \"splits\": [{
           \"class\": \"developers\",
           \"name\": \"Developers\"
       }, {
           \"class\": \"charity\",
           \"name\": \"Charity\"
       }],
-      \"split\": {
+      \"allotments\": {
           \"default\": {
               \"developers\": 0.80,
               \"charity\": 0.20
@@ -241,7 +242,7 @@ $(function(){
                                          (get-user req)
                                          cents
                                          (arg req "stripeToken")))))
-        (zerotable
+         (tag (table border 0 cellpadding 0 cellspacing 0 width "900")
           (tr (spanrow 2 (center (spanclass "payment-errors" (pr "errors go here")))))
           (tr (spanrow 2 (tag (div id 'sliders-holder))))
           (tr
